@@ -1,0 +1,122 @@
+//C-style comments can be added
+
+/* Multi-line comments are
+ * valid too
+ * Note: Lines end with a semicolon
+ */
+
+/* This line defines what kind of graph we're making ('digraph'=directed graph)
+ * and the name of the digraph ('finite_state_machine')
+ */
+ 
+digraph finite_state_machine {
+	//Define the nodes/states in the system and their style here
+
+	
+	/*These are the entry and exit nodes for the system. 
+	 * They are small, solid black circles.
+	 * Both are listed on the same line because they all have the same properties
+	 */
+	 
+	node [shape=point,label=""]ENTRY,EXIT;
+	
+	//This line defines a new node style: the circle
+
+	node [shape=circle];
+	
+	/* All the nodes defined here will be circles. Additional attributes defined
+	 * for each node will be added on to the attributes listed above.
+	 */
+	 
+	 // bootstrap[label="Bootstrap"];		//Label attributes are placed inside the node
+
+	 normal[label="Normal"];	//Newlines are allowed in labels
+
+	// oncefrom[label="OnceFrom"];
+
+     //hypershift[label="HyperShift"];
+
+    // retry[label="Retrying Operation"];
+     firstboot[label="Firstboot"];
+
+     degraded[label="Degraded"];
+
+     validating[label="Validating On-Disk State"];
+
+     waiting[label="Idle"];
+
+     updating[label="Updating"];
+
+     checkreconcilable[label="Checking Reconcilable"]
+
+	 writefiles[label="Writing Files"];
+
+     osupdate[label="Updating OS/Rebasing"];
+     osupdateinplace[label="In-place os update"];
+
+     cleanup[label="Cleaning up after OS/Rebase"]
+
+     rollbackfiles[label="Rolling Back Files"];
+
+     cordoning[label="Cordoning"];
+
+     draining[label="Draining"];
+
+     postconfig[label="Performing PostConfig Actions"]
+
+     rebooting[label="Rebooting"];
+ 
+     
+
+	 //Below are all of the definition of the edges that connect the nodes
+     ENTRY->firstboot[label="applying firstboot machineconfig"];
+     firstboot->firstboot[label="failed, retrying after 1 min"];
+     firstboot->osupdateinplace[label="boot image is too old"];
+     osupdateinplace->reboot[label="successful update}"];
+     osupdateinplace->firstboot[label="failed, retrying after 1 min"];
+	 //Edges can have labels too
+     ENTRY->normal[label="in live operation"];
+     normal->cleanup[label="cleanup on first start"];
+	 cleanup->validating[label="cleanup succeeds"];
+     cleanup->degraded[label="cleanup fails"]
+
+     validating->waiting[label="validation succeeds"];
+     validating->degraded[label="validation fails"];
+
+     waiting->checkreconcilable[label="node gets an update"];
+
+     checkreconcilable->updating[label="is reconcilable"];
+     checkreconcilable->degraded[label="not reconcilable"];
+
+     // This might be a stupid state, it's just in here
+     // as a general "I know I have things to do but not a specific action yet"
+     updating->cordoning[label="needs to drain"];
+     updating->writefiles[label="files can be live applied"];
+     updating->validating[label="nothing to be done"];
+
+     writefiles->rollbackfiles[label="file write fails"];
+     writefiles->osupdate[label="os update required"];
+     writefiles->postconfig[label="no os update required"];
+
+     rollbackfiles->degraded[label="rollback fails"];
+     rollbackfiles->updating[label="retry"];
+
+     cordoning->draining[label="cordon successful"];
+     cordoning->cordoning[label="retry"];
+
+     draining->draining[label="retry"];
+     draining->writefiles[label="drain successful"];
+
+     osupdate->postconfig[label="update success"];
+     osupdate->degraded[label="update failed]"];
+
+     degraded->updating[label="requeue/retry"];
+
+     postconfig->rebooting[label="reboot required"];
+     postconfig->degraded[label="postconfig action failed"];
+
+     rebooting->degraded[label="reboot execution fails"];
+
+	 rebooting->EXIT[label="Terminated"];
+
+}
